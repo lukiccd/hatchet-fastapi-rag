@@ -1,0 +1,14 @@
+deps
+
+fastpi[standard]
+dsrag
+openai
+shutil
+pathlib
+langchain
+langchain-openai
+typing
+google.generativeai
+cohere
+voyageai
+pymilvus[milvus-lite]

@@ -13,6 +13,13 @@ from dsrag.reranker import Reranker
 from dsrag.embedding import Embedding
 from openai import OpenAI
 from pymilvus import MilvusClient
+from functools import lru_cache
+import multiprocessing
+
+@lru_cache()
+@lru_cache()
+def get_milvus_client() -> MilvusClient:
+    return MilvusClient("./milvus.db")
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -21,7 +28,6 @@ llm = OpenAIChatAPI(model='gpt-4o-mini')
 reranker = CohereReranker(model="rerank-multilingual-v3.0")
 embedding = VoyageAIEmbedding(model="voyage-law-2", dimension=1024)
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-milvus_client =MilvusClient("./milvus.db")
 
 class DSRagClient():
     def __init__(self, llm: LLM = llm, reranker: Reranker = reranker, embedding: Embedding = embedding, dimension: int = 1024):
@@ -34,9 +40,15 @@ class DSRagClient():
         self.memory_limit = 5  # Store up to the last 5 interactions
 
     def create_knowledge_base(self, kb_id: str):
-        milvus_db = milvus_client.create_collection(collection_name=kb_id, dimension=1024)
+        milvus_db = get_milvus_client().create_collection(collection_name=kb_id, dimension=1024)
         # milvus_db = MilvusDB(kb_id=kb_id, storage_directory="~/dsRAG", dimension=1024)
-        kb = KnowledgeBase(kb_id=kb_id, embedding_model=self.embedding, vector_db=milvus_db, reranker=self.reranker, auto_context_model=self.llm)
+        kb = KnowledgeBase(
+            kb_id=kb_id,
+            embedding_model=self.embedding,
+            vector_db=milvus_db,
+            reranker=self.reranker,
+            auto_context_model=self.llm
+        )
         return kb
 
     def upload_file_to_knowledge_base(self, kb_id: str, file_path: str):
@@ -57,20 +69,20 @@ class DSRagClient():
         """Retrieve the most recent interactions for context"""
         return " ".join([f"User: {entry['user_query']} Model: {entry['model_response']}" for entry in self.session_memory])
 
-    # def query(self, kb_id: str, search_query: str, rse_params: RSE_PARAMS_PRESETS = RSE_PARAMS_PRESETS['find_all']):
-    #     # Get memory context (previous interactions)
-    #     memory_context = self.get_memory_context()
+    def query(self, kb_id: str, search_query: str, rse_params: RSE_PARAMS_PRESETS = RSE_PARAMS_PRESETS['find_all']):
+        # Get memory context (previous interactions)
+        memory_context = self.get_memory_context()
 
-    #     # Combine memory context with current query
-    #     full_query = memory_context + " " + search_query
-    #     print(full_query)
-    #     # Interact with the knowledge base
-    #     kb = KnowledgeBase(kb_id)
-    #     results = kb.query([full_query], rse_params=rse_params, latency_profiling=True)
+        # Combine memory context with current query
+        full_query = memory_context + " " + search_query
+        print(full_query)
+        # Interact with the knowledge base
+        kb = KnowledgeBase(kb_id)
+        results = kb.query([full_query], rse_params=rse_params, latency_profiling=True)
 
-    #     self.add_to_memory(search_query, results)
+        self.add_to_memory(search_query, results)
 
-    #     return results
+        return results
 
     def format_context(self, rag_output):
         """
@@ -109,13 +121,13 @@ class DSRagClient():
             print(f"Error with OpenAI API: {e}")
             return None
 
-dsr = DSRagClient(llm=llm, reranker=reranker, embedding=embedding, dimension=1024)
+# dsr = DSRagClient(llm=llm, reranker=reranker, embedding=embedding, dimension=1024)
 
-kb_id = 'test_dass'
-file_path = 'prinos.pdf'
-dsr.create_knowledge_base(kb_id=kb_id)
+# kb_id = 'test_dass'
+# file_path = 'prinos.pdf'
+# dsr.create_knowledge_base(kb_id=kb_id)
 
-dsr.upload_file_to_knowledge_base(kb_id=kb_id, file_path=file_path)
+# dsr.upload_file_to_knowledge_base(kb_id=kb_id, file_path=file_path)
 
-nomem = dsr.query(kb_id=kb_id, search_query="koliki je prinos fonda")
-print(nomem[0])
+# nomem = dsr.query(kb_id=kb_id, search_query="koliki je prinos fonda")
+# print(nomem[0])
