@@ -17,7 +17,6 @@ from functools import lru_cache
 import multiprocessing
 
 @lru_cache()
-@lru_cache()
 def get_milvus_client() -> MilvusClient:
     return MilvusClient("./milvus.db")
 
@@ -35,13 +34,33 @@ class DSRagClient():
         self.reranker = reranker
         self.embedding = embedding
         self.dimension = dimension
-        # Initialize session memory (stores last n interactions)
         self.session_memory = []
-        self.memory_limit = 5  # Store up to the last 5 interactions
+        self.memory_limit = 5
+
+    def get_knowledge_bases(self):
+        """
+        Retrieve a list of all existing knowledge bases (collections) in Milvus.
+
+        Returns:
+            List[str]: A list of knowledge base (collection) names.
+        """
+        try:
+            milvus_db = get_milvus_client()
+            collections = milvus_db.list_collections()
+
+            if not collections:
+                print("No knowledge bases found in Milvus.")
+                return []
+
+            return collections
+
+        except Exception as e:
+            print(f"Error retrieving knowledge bases: {e}")
+            return []
+
 
     def create_knowledge_base(self, kb_id: str):
         milvus_db = get_milvus_client().create_collection(collection_name=kb_id, dimension=1024)
-        # milvus_db = MilvusDB(kb_id=kb_id, storage_directory="~/dsRAG", dimension=1024)
         kb = KnowledgeBase(
             kb_id=kb_id,
             embedding_model=self.embedding,
@@ -120,14 +139,3 @@ class DSRagClient():
         except Exception as e:
             print(f"Error with OpenAI API: {e}")
             return None
-
-# dsr = DSRagClient(llm=llm, reranker=reranker, embedding=embedding, dimension=1024)
-
-# kb_id = 'test_dass'
-# file_path = 'prinos.pdf'
-# dsr.create_knowledge_base(kb_id=kb_id)
-
-# dsr.upload_file_to_knowledge_base(kb_id=kb_id, file_path=file_path)
-
-# nomem = dsr.query(kb_id=kb_id, search_query="koliki je prinos fonda")
-# print(nomem[0])

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 function KnowledgeBaseList({ knowledgeBases, onNewKB, onUpload }) {
   return (
@@ -8,8 +8,8 @@ function KnowledgeBaseList({ knowledgeBases, onNewKB, onUpload }) {
         {knowledgeBases.length ? (
           knowledgeBases.map((kb, i) => (
             <div key={i} className="kb-item">
-              <span>📘 {kb.name}</span>
-              <button onClick={() => onUpload(kb.name)}>Upload Document</button>
+              <span>📘 {kb}</span>
+              <button onClick={() => onUpload(kb)}>Upload Document</button>
             </div>
           ))
         ) : (

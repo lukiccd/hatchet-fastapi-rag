@@ -1,10 +1,10 @@
 from hatchet_sdk import Hatchet
-from workflows.kb import kb_create
+from workflows.kb import kb_create, kb_get, kb_upload
 
 hatchet = Hatchet(debug=True)
 
 def main() -> None:
-    worker = hatchet.worker("rag-agent", workflows=[kb_create])
+    worker = hatchet.worker("rag-agent", workflows=[kb_create, kb_get, kb_upload])
 
     worker.start()
 

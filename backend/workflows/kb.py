@@ -12,7 +12,6 @@ from fastapi import File, UploadFile
 
 dsrag = DSRagClient()
 hatchet = Hatchet(debug=True)
-
 class KnowledgeBaseCreateRequest(BaseModel):
     kb_id: str
 
@@ -22,13 +21,13 @@ class KnowledgeBaseCreateResponse(BaseModel):
     error: Optional[str] = None
 
 class KnowledgeBaseUploadInput(BaseModel):
-    knowledge_base: str
-    file: UploadFile = File(...)
+    kb_id: str
+    file_path: str
 
-class KnowledgeBaseUploadOuptut(BaseModel):
+class KnowledgeBaseUploadOutput(BaseModel):
     filename: str
     message: str
-    err: Optional[str]
+    err: Optional[str] = None
 
 @hatchet.task(name="kb-create", input_validator=KnowledgeBaseCreateRequest)
 def kb_create(input: KnowledgeBaseCreateRequest, ctx: Context):
@@ -44,27 +43,32 @@ def kb_create(input: KnowledgeBaseCreateRequest, ctx: Context):
             "error": str(e),
             "kb_id": input.kb_id
         }
-# @hatchet.task(name="kb-upload", input_validator=KnowledgeBaseUploadInput)
-# def kb_upload(input: KnowledgeBaseUploadInput, ctx: Context):
-#     try:
-#         upload_dir = "uploads"
-#         Path(upload_dir).mkdir(parents=True, exist_ok=True)
 
-#         file_location = os.path.join(upload_dir, input.file.filename)
+@hatchet.task(name="kb-get")
+def kb_get(input, ctx):
+    try:
+        knowledge_bases = dsrag.get_knowledge_bases()
+        return {
+            "message": "Knowledge bases fetched successfully.",
+            "knowledge_bases": knowledge_bases
+        }
+    except Exception as e:
+        return {
+            "message": "Failed to fetch knowledge bases.",
+            "error": str(e),
+        }
 
-#         with open(file_location, "wb") as buffer:
-#             shutil.copyfileobj(input.file.file, buffer)
-
-#         kb = dsrag.upload_file_to_knowledge_base(
-#             kb_id=input.knowledge_base, file_path=file_location
-#         )
-
-#         os.remove(file_location)
-
-#         return {
-#             "filename": input.file.filename,
-#             "message": "File uploaded successfully.",
-#         }
-
-#     except Exception as e:
-#         return KnowledgeBaseUploadOuptut('', 'Unable to upload KB', e)
+@hatchet.task(name="kb-upload", input_validator=KnowledgeBaseUploadInput)
+def kb_upload(input: KnowledgeBaseUploadInput, ctx: Context):
+    try:
+        kb = dsrag.upload_file_to_knowledge_base(
+            kb_id=input.kb_id, file_path=input.file_path
+        )
+        os.remove(input.file_path)
+        return {"filename": Path(input.file_path).name, "message": "File uploaded successfully."}
+    except Exception as e:
+        return KnowledgeBaseUploadOutput(
+            filename="",
+            message="Unable to upload KB",
+            error=str(e)
+        )
