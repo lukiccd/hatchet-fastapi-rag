@@ -5,10 +5,11 @@ from dsrag_wrapper import DSRagClient
 from dsrag.rse import RSE_PARAMS_PRESETS
 from dsrag.knowledge_base import KnowledgeBase
 from pathlib import Path
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import Context, EmptyModel, Hatchet
 from pydantic import BaseModel
 import json
 from fastapi import File, UploadFile
+from agent import agent
 
 dsrag = DSRagClient()
 hatchet = Hatchet(debug=True)
@@ -28,6 +29,10 @@ class KnowledgeBaseUploadOutput(BaseModel):
     filename: str
     message: str
     err: Optional[str] = None
+
+class KnowledgeBaseQuery(BaseModel):
+    kb_id: str
+    query: list[str]
 
 @hatchet.task(name="kb-create", input_validator=KnowledgeBaseCreateRequest)
 def kb_create(input: KnowledgeBaseCreateRequest, ctx: Context):
@@ -72,3 +77,20 @@ def kb_upload(input: KnowledgeBaseUploadInput, ctx: Context):
             message="Unable to upload KB",
             error=str(e)
         )
+
+@hatchet.task(name="kb-query")
+async def kb_query(input: EmptyModel, ctx: Context) -> None:
+    # kb_id = input.kb_id
+    # query = input.query
+    config = {"configurable": {"thread_id": "1"}}
+    kb = KnowledgeBase(kb_id="aaa", exists_ok=True)
+    rag_output = kb.query("sta ovaj zakon najvise obuhvata?", rse_params=RSE_PARAMS_PRESETS["find_all"])
+    context = dsrag.format_context(rag_output=rag_output)
+    # prompt = f"Context:\n{context}\n\nQuestion: {query[0]}"
+    prompt = f"Context:\n{context}\n\nQuestion: sta ovaj zakon najvise obuhvata?"
+    response = agent.invoke(
+        {"messages": [{"role": "user", "content": prompt}]},
+        config=config
+    )
+    print(response)
+    return {"response": response}

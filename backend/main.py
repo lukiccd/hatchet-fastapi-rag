@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from dsrag.rse import RSE_PARAMS_PRESETS
 from dsrag.knowledge_base import KnowledgeBase
 from pathlib import Path
-from workflows.kb import kb_create, kb_get, kb_upload, KnowledgeBaseUploadInput, KnowledgeBaseCreateRequest
+from workflows.kb import kb_create, kb_get, kb_upload, kb_query, KnowledgeBaseUploadInput, KnowledgeBaseCreateRequest, KnowledgeBaseQuery
 from agent import agent
 
 app = FastAPI()
@@ -24,10 +24,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-
-class ChatRequest(BaseModel):
-    kb_id: str
-    query: list[str]
 
 @app.get("/")
 def read_root():
@@ -66,16 +62,8 @@ async def upload_file_to_knowledge_base(
 
 
 @app.post("/chat/update")
-async def generate_dsrag_chat_completion(chat_req: ChatRequest):
-    # kb_id = chat_req.kb_id
-    # query = chat_req.query
-    # config = {"configurable": {"thread_id": "1"}}
-    # kb = KnowledgeBase(kb_id=kb_id, exists_ok=True)
-    # rag_output = kb.query(query, rse_params=RSE_PARAMS_PRESETS["find_all"])
-    # context = dsrag.format_context(rag_output=rag_output)
-    # prompt = f"Context:\n{context}\n\nQuestion: {query[0]}"
-    # response = agent.invoke(
-    #     {"messages": [{"role": "user", "content": prompt}]},
-    #     config=config
-    # )
-    return {"response": "1"}
+async def generate_dsrag_chat_completion():
+    # kb_id = input.kb_id
+    # query = input.query
+    response = await kb_query.aio_run()
+    return response
