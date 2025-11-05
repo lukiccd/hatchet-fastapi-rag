@@ -32,7 +32,7 @@ class KnowledgeBaseUploadOutput(BaseModel):
 
 class KnowledgeBaseQuery(BaseModel):
     kb_id: str
-    query: list[str]
+    query: str
 
 @hatchet.task(name="kb-create", input_validator=KnowledgeBaseCreateRequest)
 def kb_create(input: KnowledgeBaseCreateRequest, ctx: Context):

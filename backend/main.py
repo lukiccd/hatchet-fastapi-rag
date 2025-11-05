@@ -48,22 +48,19 @@ async def upload_file_to_knowledge_base(
     upload_dir = "./uploads"
     Path(upload_dir).mkdir(parents=True, exist_ok=True)
 
-    # Save file temporarily
     file_location = os.path.join(upload_dir, file.filename)
     with open(file_location, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Pass only JSON-serializable fields to Hatchet
     result = kb_upload.run(
         KnowledgeBaseUploadInput(kb_id=kb_id, file_path=file_location)
     )
 
     return result
 
-
 @app.post("/chat/update")
-async def generate_dsrag_chat_completion():
-    # kb_id = input.kb_id
-    # query = input.query
-    response = await kb_query.aio_run()
+async def generate_dsrag_chat_completion(input: KnowledgeBaseQuery):
+    kb_id = input.kb_id
+    query = input.query
+    response = await kb_query.aio_run(KnowledgeBaseQuery(kb_id=kb_id, query=query))
     return response
