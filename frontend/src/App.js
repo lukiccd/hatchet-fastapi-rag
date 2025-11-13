@@ -9,6 +9,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [knowledgeBases, setKnowledgeBases] = useState([]);
+  const [selectedKB, setSelectedKB] = useState(null);
   const [newKBName, setNewKBName] = useState("");
   const [showKBDialog, setShowKBDialog] = useState(false);
   const [uploadingKB, setUploadingKB] = useState(null);
@@ -21,7 +22,6 @@ function App() {
   }, []);
 
   const demoKBs = ["finance", "docs"];
-
   const demoReplies = [
     "That's a great question — in this dataset, the answer seems to suggest...",
     "According to the indexed knowledge base, the relevant document says...",
@@ -94,44 +94,47 @@ function App() {
     e.preventDefault();
     if (!input.trim()) return;
 
+    if (!selectedKB) {
+      alert("⚠️ Please select a knowledge base first.");
+      return;
+    }
+
     const userMessage = { sender: "user", text: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
 
-    // Simulate latency + fake reply
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_BASE}/chat/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: input,
+          kb_id: selectedKB, // ✅ pass selected KB
+        }),
+      });
+
+      if (!res.ok) throw new Error("Chat request failed");
+      const data = await res.json();
+      console.log(data);
+      const botMessage = { sender: "bot", text: data.response.messages[1] };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (err) {
+      console.error("Chat error:", err);
+      // Fallback demo reply
       const botMessage = {
         sender: "bot",
         text:
           demoReplies[Math.floor(Math.random() * demoReplies.length)] +
-          " (" +
-          new Date().toLocaleTimeString() +
-          ")",
+          ` (demo, KB: ${selectedKB})`,
       };
       setMessages((prev) => [...prev, botMessage]);
-    }, 900);
+    }
   };
 
   return (
     <div className="app-container">
       <div className="app-header">
         <div className="app-header-content">
-          <svg
-            width="160"
-            viewBox="0 0 137 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="app-logo"
-          >
-            <path
-              d="M17.5 10L22 0L30.6059 8.60589C31.7939 9.79394 32.388 10.388 32.6105 11.0729C32.8063 11.6755 32.8063 12.3245 32.6105 12.9271C32.388 13.612 31.7939 14.2061 30.6059 15.3941L22 24H15L26.7517 11.3444C27.146 10.9197 27.3432 10.7074 27.3527 10.5263C27.361 10.3691 27.2947 10.2171 27.1739 10.1162C27.0347 10 26.7449 10 26.1654 10H17.5Z"
-              fill="currentColor"
-            ></path>
-            <path
-              d="M16.5 14L12 24L3.39411 15.3941C2.20606 14.2061 1.61204 13.612 1.38947 12.9271C1.1937 12.3245 1.1937 11.6755 1.38947 11.0729C1.61204 10.388 2.20606 9.79394 3.39411 8.60589L12 0H19L7.24833 12.6556C6.854 13.0803 6.65684 13.2926 6.6473 13.4737C6.63902 13.6309 6.70527 13.7829 6.82612 13.8838C6.96529 14 7.25505 14 7.83457 14H16.5Z"
-              fill="currentColor"
-            ></path>
-          </svg>
           <h1>RAG Demo</h1>
           <p className="subtitle">LangChain + FastAPI + React + Hatchet</p>
         </div>
@@ -139,6 +142,8 @@ function App() {
 
       <KnowledgeBaseList
         knowledgeBases={knowledgeBases}
+        selectedKB={selectedKB}
+        onSelectKB={setSelectedKB}
         onNewKB={() => setShowKBDialog(true)}
         onUpload={(kbName) => setUploadingKB(kbName)}
       />

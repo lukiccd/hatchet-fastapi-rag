@@ -319,3 +319,12 @@ body {
   margin: 0.2rem 0 0;
   letter-spacing: 0.3px;
 }
+
+.kb-item.selected {
+  background: linear-gradient(90deg, #060b24, #131e3b);
+  border-left: 3px solid white;
+}
+.kb-actions {
+  display: flex;
+  gap: 8px;
+}

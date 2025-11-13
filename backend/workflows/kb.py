@@ -1,18 +1,23 @@
-from typing import Union, Optional
 import os
-import shutil
+from typing import Optional
 from dsrag_wrapper import DSRagClient
 from dsrag.rse import RSE_PARAMS_PRESETS
 from dsrag.knowledge_base import KnowledgeBase
 from pathlib import Path
 from hatchet_sdk import Context, EmptyModel, Hatchet
 from pydantic import BaseModel
-import json
-from fastapi import File, UploadFile
 from agent import agent
+from dsrag.llm import OpenAIChatAPI
+from dsrag.embedding import VoyageAIEmbedding
+from dsrag.reranker import CohereReranker
 
-dsrag = DSRagClient()
+llm = OpenAIChatAPI(model='gpt-4o-mini')
+reranker = CohereReranker(model="rerank-multilingual-v3.0")
+embedding = VoyageAIEmbedding(model="voyage-law-2", dimension=1024)
+
+dsrag = DSRagClient(llm=llm, reranker=reranker, embedding=embedding, dimension=1024)
 hatchet = Hatchet(debug=True)
+
 class KnowledgeBaseCreateRequest(BaseModel):
     kb_id: str
 
@@ -64,12 +69,11 @@ def kb_get(input, ctx):
         }
 
 @hatchet.task(name="kb-upload", input_validator=KnowledgeBaseUploadInput)
-def kb_upload(input: KnowledgeBaseUploadInput, ctx: Context):
+async def kb_upload(input: KnowledgeBaseUploadInput, ctx: Context):
     try:
-        kb = dsrag.upload_file_to_knowledge_base(
+        await dsrag.upload_file_to_knowledge_base(
             kb_id=input.kb_id, file_path=input.file_path
         )
-        os.remove(input.file_path)
         return {"filename": Path(input.file_path).name, "message": "File uploaded successfully."}
     except Exception as e:
         return KnowledgeBaseUploadOutput(
@@ -80,14 +84,14 @@ def kb_upload(input: KnowledgeBaseUploadInput, ctx: Context):
 
 @hatchet.task(name="kb-query")
 async def kb_query(input: EmptyModel, ctx: Context) -> None:
-    # kb_id = input.kb_id
-    # query = input.query
-    config = {"configurable": {"thread_id": "1"}}
-    kb = KnowledgeBase(kb_id="aaa", exists_ok=True)
-    rag_output = kb.query("sta ovaj zakon najvise obuhvata?", rse_params=RSE_PARAMS_PRESETS["find_all"])
+    kb_id = input.kb_id
+    query = input.query
+    config = {"configurable": {"thread_id": "2"}}
+    kb = KnowledgeBase(kb_id=kb_id, exists_ok=True)
+    rag_output = kb.query(search_queries=[query], rse_params=RSE_PARAMS_PRESETS["balanced"])
+    print(rag_output)
     context = dsrag.format_context(rag_output=rag_output)
-    # prompt = f"Context:\n{context}\n\nQuestion: {query[0]}"
-    prompt = f"Context:\n{context}\n\nQuestion: sta ovaj zakon najvise obuhvata?"
+    prompt = f"Context:\n{context}\n\nQuestion: {query}"
     response = agent.invoke(
         {"messages": [{"role": "user", "content": prompt}]},
         config=config

@@ -8,7 +8,7 @@ You have access to one tool:
 
 - get_bank_rate: use this to get current bank FX rate
 
-If a user asks you to give an estimate currency conversion for X transactions, use the tool.
+If a user asks you to give an estimate currency conversion for X transactions, use the tool. If the user doesn't ask anything financially-related, continue as usual.
 """
 
 @tool

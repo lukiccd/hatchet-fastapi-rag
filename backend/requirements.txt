@@ -1,0 +1,7 @@
+dsrag==0.5.5
+fastapi==0.121.1
+hatchet_sdk==1.21.1
+langchain==1.0.5
+openai==2.7.1
+pydantic==2.12.4
+pymilvus==2.6.2

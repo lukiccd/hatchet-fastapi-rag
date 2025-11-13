@@ -52,7 +52,7 @@ async def upload_file_to_knowledge_base(
     with open(file_location, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    result = kb_upload.run(
+    result = await kb_upload.aio_run(
         KnowledgeBaseUploadInput(kb_id=kb_id, file_path=file_location)
     )
 
