@@ -1,15 +1,14 @@
-import os
-from typing import Optional
-from dsrag_wrapper import DSRagClient
-from dsrag.rse import RSE_PARAMS_PRESETS
-from dsrag.knowledge_base import KnowledgeBase
-from pathlib import Path
 from hatchet_sdk import Context, EmptyModel, Hatchet
 from pydantic import BaseModel
-from agent import agent
+from typing import Optional
+from pathlib import Path
+from dsrag_wrapper import DSRagClient
+from dsrag.knowledge_base import KnowledgeBase
 from dsrag.llm import OpenAIChatAPI
 from dsrag.embedding import VoyageAIEmbedding
 from dsrag.reranker import CohereReranker
+from dsrag.rse import RSE_PARAMS_PRESETS
+from agent import agent
 
 llm = OpenAIChatAPI(model='gpt-4o-mini')
 reranker = CohereReranker(model="rerank-multilingual-v3.0")
