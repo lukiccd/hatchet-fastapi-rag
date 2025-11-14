@@ -12,7 +12,7 @@ from dsrag.database.vector.milvus_db import MilvusDB
 
 @lru_cache()
 def get_milvus_client() -> MilvusClient:
-    return MilvusClient("./milvus.db")
+    return MilvusClient("/home/lukiccd/dsRAG/milvus.db")
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -46,8 +46,8 @@ class DSRagClient():
 
 
     def create_knowledge_base(self, kb_id: str):
-        # milvus_db = get_milvus_client().create_collection(collection_name=kb_id, dimension=1024)
-        milvus_db = MilvusDB(kb_id=kb_id, storage_directory="~/dsRAG", dimension=1024)
+        milvus_db = get_milvus_client()
+        # milvus_db = MilvusDB(kb_id=kb_id, storage_directory="~/dsRAG", dimension=1024)
         kb = KnowledgeBase(
             kb_id=kb_id,
             embedding_model=self.embedding,
