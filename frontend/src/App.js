@@ -30,10 +30,10 @@ function App() {
 
   const fetchKnowledgeBases = async () => {
     try {
-      const res = await fetch(`${API_BASE}/knowledge-base/get`);
+      const res = await fetch(`${API_BASE}/knowledge-bases`);
       if (!res.ok) throw new Error("Fallback to demo data");
       const data = await res.json();
-      setKnowledgeBases(data.response.knowledge_bases);
+      setKnowledgeBases(data.data.knowledge_bases);
     } catch (err) {
       console.warn("Using demo KBs:", err.message);
       setTimeout(() => setKnowledgeBases(demoKBs), 600);
@@ -45,7 +45,7 @@ function App() {
     if (!newKBName.trim()) return;
 
     try {
-      const res = await fetch(`${API_BASE}/knowledge-base/create`, {
+      const res = await fetch(`${API_BASE}/knowledge-bases/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kb_id: newKBName }),
@@ -55,7 +55,7 @@ function App() {
       const data = await res.json();
 
       alert(`✅ Knowledge Base "${newKBName}" created successfully!`);
-      setKnowledgeBases((prev) => [...prev, data.response.kb_id]);
+      setKnowledgeBases((prev) => [...prev, data.data.kb_id]);
       setNewKBName("");
       setShowKBDialog(false);
     } catch (err) {
@@ -73,7 +73,7 @@ function App() {
       formData.append("file", uploadFile);
       formData.append("kb_id", uploadingKB);
 
-      const res = await fetch(`${API_BASE}/knowledge-base/document/upload`, {
+      const res = await fetch(`${API_BASE}/knowledge-bases/upload`, {
         method: "POST",
         body: formData,
       });
@@ -104,7 +104,7 @@ function App() {
     setInput("");
 
     try {
-      const res = await fetch(`${API_BASE}/chat/update`, {
+      const res = await fetch(`${API_BASE}/chat/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -116,7 +116,10 @@ function App() {
       if (!res.ok) throw new Error("Chat request failed");
       const data = await res.json();
       console.log(data);
-      const botMessage = { sender: "bot", text: data.response.messages[1] };
+      const botMessage = {
+        sender: "bot",
+        text: data.data.response.messages[1],
+      };
       setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
       console.error("Chat error:", err);
