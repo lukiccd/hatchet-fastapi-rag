@@ -1,23 +1,10 @@
-import warnings
 from dsrag.knowledge_base import KnowledgeBase
 from dsrag.database.vector.basic_db import BasicVectorDB
 from dsrag.dsparse.file_parsing.non_vlm_file_parsing import extract_text_from_pdf
 from dsrag.llm import LLM
 from dsrag.reranker import Reranker
 from dsrag.embedding import Embedding
-from pymilvus import MilvusClient
-from functools import lru_cache
 from pathlib import Path
-
-@lru_cache()
-def get_milvus_client() -> MilvusClient:
-    base_dir = Path.home() / "dsRAG"
-    base_dir.mkdir(parents=True, exist_ok=True)
-
-    db_path = base_dir / "milvus.db"
-    return MilvusClient(str(db_path))
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class DSRagClient():
     def __init__(self, llm: LLM, reranker: Reranker, embedding: Embedding, dimension: int = 1024):
