@@ -40,6 +40,7 @@ class KnowledgeBaseQuery(BaseModel):
 
 @hatchet.task(name="kb-create", input_validator=KnowledgeBaseCreateRequest)
 def kb_create(input: KnowledgeBaseCreateRequest, ctx: Context):
+    print(input.kb_id)
     try:
         kb = dsrag.create_knowledge_base(kb_id=input.kb_id)
         return {
@@ -74,11 +75,13 @@ async def kb_upload(input: KnowledgeBaseUploadInput, ctx: Context):
             kb_id=input.kb_id, file_path=input.file_path
         )
         return {"filename": Path(input.file_path).name, "message": "File uploaded successfully."}
+
     except Exception as e:
+        print(e)
         return KnowledgeBaseUploadOutput(
-            filename="",
+            filename= Path(input.file_path).name,
             message="Unable to upload KB",
-            error=str(e)
+            error=e
         )
 
 @hatchet.task(name="kb-query")

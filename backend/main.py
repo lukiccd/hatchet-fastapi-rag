@@ -42,8 +42,11 @@ async def list_knowledge_bases():
 async def create_knowledge_base(payload: KnowledgeBaseCreateRequest):
     return {"data": kb_create.run(payload)}
 
-@app.post("/knowledge-bases/{kb_id}/documents")
-async def upload_document(kb_id: str, file: UploadFile = File(...)):
+@app.post("/knowledge-bases/upload")
+async def upload_document(
+    kb_id: str = Form(...),
+    file: UploadFile = File(...)
+):
     file_path = UPLOAD_DIR / file.filename
 
     with file_path.open("wb") as buffer:

@@ -4,9 +4,9 @@ function ChatWindow({ messages, input, setInput, onSend }) {
   return (
     <div className="chat-container">
       <div className="messages">
-        {messages.map((msg, i) => (
-          <div key={i} className={`bubble ${msg.sender}`}>
-            {msg.text}
+        {messages.map((message, i) => (
+          <div key={i} className={`bubble ${message.sender}`}>
+            {message.text}
           </div>
         ))}
       </div>
